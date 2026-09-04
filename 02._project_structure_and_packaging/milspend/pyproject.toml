@@ -1,7 +1,7 @@
 [project]
-name = "dadjoke"
+name = "milspend"
 version = "0.1.0"
-description = "Print a random dad joke from icanhazdadjoke.com"
+description = "Report a country's military expenditure (% of GDP) from World Bank / SIPRI data"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "clbokea", email = "clbo@kea.dk" }]
@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-dadjoke = "dadjoke.cli:main"
+milspend = "milspend.cli:main"
 
 # Flat layout + hatchling, mirroring mistral-vibe's pyproject.toml.
 # (uv's own default is a src/ layout with the uv_build backend — see the demo README.)
@@ -19,4 +19,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-include = ["dadjoke/"]
+include = ["milspend/"]

@@ -8,21 +8,29 @@ This demo builds the smaller version first: a project with **one dependency and
 one entry point**, created live in front of the class, so that every field in
 mistral-vibe's `pyproject.toml` has already been seen in miniature.
 
-The finished project is in [`dadjoke/`](dadjoke/). What follows is the script
+The finished project is in [`milspend/`](milspend/). What follows is the script
 for building it from an empty folder.
 
 ---
 
 ## What we're building
 
-`dadjoke` — a one-command CLI that fetches a random dad joke over HTTP:
+`milspend` — a one-command CLI that reports a country's **military expenditure
+as a share of GDP**, pulled live from the World Bank's open-data API
+(underlying source: SIPRI):
 
 ```console
-$ uv run dadjoke
-Why don't eggs tell jokes? They'd crack each other up.
+$ uv run milspend UKR
+Military expenditure (% of GDP) — Ukraine
+  2020    4.4%
+  2021    3.4%
+  2022   25.6%
+  2023   36.5%
+  2024   34.5%
 ```
 
-The joke is not the point. The point is the four things around it:
+The data isn't the point (though it makes for a real conversation — try `DNK`,
+`SWE`, `USA`, `RUS`). The point is the four things around it:
 
 | Piece | Where it ends up |
 |---|---|
@@ -31,6 +39,10 @@ The joke is not the point. The point is the four things around it:
 | A terminal command | `[project.scripts]` |
 | A build backend | `[build-system]` |
 
+Why this API: it's public with **no API key**, it's stable, and the JSON is
+small. `MS.MIL.XPND.GD.ZS` is the World Bank indicator code for "Military
+expenditure (% of GDP)".
+
 ---
 
 ## Build it live
@@ -38,12 +50,12 @@ The joke is not the point. The point is the four things around it:
 ### 1. Start from nothing
 
 ```console
-uv init --python 3.12 dadjoke
-cd dadjoke
+uv init --python 3.12 milspend
+cd milspend
 ```
 
 Look at what `uv init` made: `pyproject.toml`, `README.md`, `.python-version`,
-and a `src/dadjoke/` package with a `main()` in `__init__.py`. Modern `uv`
+and a `src/milspend/` package with a `main()` in `__init__.py`. Modern `uv`
 (0.12+) scaffolds a **src layout** with its own `uv_build` backend and even
 pre-fills `[project.scripts]`.
 
@@ -56,30 +68,40 @@ matches what students are about to read in their fork.
 
 ```console
 rm -r src
-mkdir dadjoke
+mkdir milspend
 ```
 
-Create the package files (see `dadjoke/` in this repo for the final content):
+Create the package files (see `milspend/` in this repo for the final content):
 
-- `dadjoke/__init__.py` — just a version string
-- `dadjoke/cli.py` — `fetch_joke()` and `main()`
-- `dadjoke/__main__.py` — so `python -m dadjoke` also works
+- `milspend/__init__.py` — just a version string
+- `milspend/cli.py` — `fetch_expenditure()` and `main()`
+- `milspend/__main__.py` — so `python -m milspend` also works
 
-`main()` in `cli.py` is deliberately tiny:
+`main()` in `cli.py` is deliberately small:
 
 ```python
+import sys
 import httpx
 
-API_URL = "https://icanhazdadjoke.com/"
+API_URL = "https://api.worldbank.org/v2/country/{code}/indicator/MS.MIL.XPND.GD.ZS"
 
-def fetch_joke() -> str:
-    response = httpx.get(API_URL, headers={"Accept": "application/json"})
+def fetch_expenditure(code: str) -> tuple[str, list[tuple[str, float]]]:
+    response = httpx.get(API_URL.format(code=code), params={"format": "json", "per_page": "100"})
     response.raise_for_status()
-    return response.json()["joke"]
+    payload = response.json()
+    rows = [(r["date"], r["value"]) for r in payload[1] if r["value"] is not None]
+    return payload[1][0]["country"]["value"], sorted(rows)
 
 def main() -> None:
-    print(fetch_joke())
+    code = sys.argv[1] if len(sys.argv) > 1 else "UKR"
+    country, rows = fetch_expenditure(code)
+    print(f"Military expenditure (% of GDP) — {country}")
+    for year, percent in rows[-10:]:
+        print(f"  {year}  {percent:5.1f}%")
 ```
+
+(Small teachable quirk: the World Bank returns a **two-element list** —
+`[metadata, data]` — so the rows live in `payload[1]`, not `payload`.)
 
 ### 3. Wire up `pyproject.toml` by hand
 
@@ -87,29 +109,29 @@ Edit it to the shape mistral-vibe uses:
 
 ```toml
 [project]
-name = "dadjoke"
+name = "milspend"
 version = "0.1.0"
-description = "Print a random dad joke from icanhazdadjoke.com"
+description = "Report a country's military expenditure (% of GDP) from World Bank / SIPRI data"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["httpx>=0.28"]
 
 [project.scripts]
-dadjoke = "dadjoke.cli:main"       # <command> = "<module>:<function>"
+milspend = "milspend.cli:main"     # <command> = "<module>:<function>"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-include = ["dadjoke/"]
+include = ["milspend/"]
 ```
 
-**Talking point — the entry point.** `dadjoke = "dadjoke.cli:main"` is the
+**Talking point — the entry point.** `milspend = "milspend.cli:main"` is the
 whole trick behind "why does typing a word run Python?". At install time the
-build backend writes a small launcher script named `dadjoke` onto the `PATH`;
-that script imports `dadjoke.cli` and calls `main()`. Same line, same mechanism
-as `vibe = "vibe.cli.entrypoint:main"`.
+build backend writes a small launcher script named `milspend` onto the `PATH`;
+that script imports `milspend.cli` and calls `main()`. Same line, same
+mechanism as `vibe = "vibe.cli.entrypoint:main"`.
 
 ### 4. Add the dependency with uv
 
@@ -134,12 +156,12 @@ manually add a line to `requirements.txt` and hope you got the version right.
 ### 5. Run the command
 
 ```console
-uv run dadjoke          # the entry-point script
-uv run python -m dadjoke # the __main__.py path
+uv run milspend UKR          # the entry-point script
+uv run python -m milspend    # the __main__.py path (defaults to UKR)
 ```
 
 `uv run` syncs the environment from the lock file first, then runs — so a
-fresh clone + `uv run dadjoke` just works with no setup steps.
+fresh clone + `uv run milspend` just works with no setup steps.
 
 ### 6. (Optional) See the package that would ship
 
@@ -148,8 +170,8 @@ uv build
 ls dist/
 ```
 
-`dadjoke-0.1.0-py3-none-any.whl` is what `pip install dadjoke` would download
-if this were on PyPI. Unzip it: it contains exactly the `dadjoke/` folder plus
+`milspend-0.1.0-py3-none-any.whl` is what `pip install milspend` would download
+if this were on PyPI. Unzip it: it contains exactly the `milspend/` folder plus
 metadata — the `[tool.hatch.build.targets.wheel] include` line decided that.
 (Delete `dist/` afterwards; it's a build artifact, not source.)
 
@@ -157,16 +179,20 @@ metadata — the `[tool.hatch.build.targets.wheel] include` line decided that.
 
 ## Now relate it to the mistral-vibe fork
 
-Open the fork's `pyproject.toml` side by side with `dadjoke`'s and map it field
-by field. Every concept is the same, just bigger:
+Open the fork's `pyproject.toml` side by side with `milspend`'s and map it
+field by field. Every concept is the same, just bigger:
 
-| In `dadjoke` | In mistral-vibe | Note |
+| In `milspend` | In mistral-vibe | Note |
 |---|---|---|
-| `dadjoke/` next to `pyproject.toml` | `vibe/` next to `pyproject.toml` | same flat layout |
+| `milspend/` next to `pyproject.toml` | `vibe/` next to `pyproject.toml` | same flat layout |
 | 1 dependency (`httpx`) | ~60 dependencies, all `==`-pinned | `uv.lock` scales to hundreds of packages |
-| `dadjoke = "dadjoke.cli:main"` | `vibe = "vibe.cli.entrypoint:main"` (+ `vibe-acp`, `vibe-app-server`) | one project can expose several commands |
+| `milspend = "milspend.cli:main"` | `vibe = "vibe.cli.entrypoint:main"` (+ `vibe-acp`, `vibe-app-server`) | one project can expose several commands |
 | `[build-system]` → hatchling | hatchling **+ hatch-vcs** (version from git tags) | same backend, extra plugin |
 | no tool config yet | `[tool.ruff]`, `[tool.pyright]`, `[tool.pytest]` … | tool config also lives in `pyproject.toml` — session 3 |
+
+`httpx` is not a coincidence: it's genuinely one of mistral-vibe's
+dependencies (the fork talks to the Mistral API over HTTP), so the dependency
+students just added is one they'll meet again in session 7.
 
 Then hand off to the **scavenger hunt** exercise: students now know what
 `[project.scripts]` *is*, so "what function does `vibe` call?" is a lookup, not
@@ -176,9 +202,11 @@ a mystery.
 
 ## Notes for next time
 
-- `httpx` is genuinely one of mistral-vibe's dependencies — nice, but it does
-  mean a live network call in class. If the venue wi-fi is flaky, swap `main()`
-  for a hard-coded joke and still demo the packaging (the dependency story
-  survives; `httpx` just isn't called).
-- `icanhazdadjoke.com` needs the `Accept: application/json` header or it
-  returns HTML — a small, real reason to talk about request headers.
+- Live network call in class. If the venue wi-fi is flaky, hard-code a short
+  list of `(year, value)` tuples in `main()` and still demo the packaging — the
+  dependency story survives, `httpx` just isn't called.
+- The World Bank API wants an **ISO-3** country code (`UKR`, `USA`, `DNK`), not
+  ISO-2. A bad code returns `[metadata, null]` — `main()` turns that into a
+  clean error, a small excuse to talk about checking API responses.
+- Good countries to pull up live: `UKR` (3% → 36% across 2021–2023), `DNK` /
+  `SWE` (the recent NATO-2% climb), `RUS`, `USA`.

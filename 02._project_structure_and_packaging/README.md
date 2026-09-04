@@ -20,17 +20,21 @@ terminal (scannable with a phone):
 
 ```console
 $ uv run qr "https://kea.dk"
-█████████████████████
-██ ▄▄▄▄▄ █ █▄▀▄▀▄█▄██
-██ █   █ █▀ ▀▄ ██▀ ██
-██ █▄▄▄█ █▀ █▀▄ ▄█▄██
-██▄▄▄▄▄▄▄█▄ ██ ██▀ ██
-██▄█▀ █▄▄ ▀ ▄▀ ███▄██
-██▄█▄ ▄▀▀▄▀▄▀▄▀█▀▄▀██
-██▄▀▄▀▀ █▄███▀ ▄██ ██
-██▄▄▄▀ ▄  ▀▄▄█▀ ▀████
-██▄▄████▄█▄▄▄▄▄███▄██
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+█████████████████████████████
+█████████████████████████████
+████ ▄▄▄▄▄ ██▀█  █ ▄▄▄▄▄ ████
+████ █   █ ███▀▀▄█ █   █ ████
+████ █▄▄▄█ █▀█▄█▄█ █▄▄▄█ ████
+████▄▄▄▄▄▄▄█▄█ █ █▄▄▄▄▄▄▄████
+████ █▀ █▄▄▀▄█▀ ▀▄▀ ▀███▀████
+████▄▄ ▀▀▄▄███▄▄▄█▀█▀▀▄▀ ████
+████▄█▄▄█▄▄▄ ██  █▀ █▄██▀████
+████ ▄▄▄▄▄ █▀▀▄▀ ▄▄▀ ▄▄ ▀████
+████ █   █ █▀█ ▄▀▄▀█ ▄█▀▀████
+████ █▄▄▄█ ██▀ █▄ ▄█▄█▄█▄████
+████▄▄▄▄▄▄▄█▄▄█▄▄█▄█▄██▄█████
+█████████████████████████████
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 ```
 
 No network, no files, no config — the whole app is one call to the `segno`
@@ -90,8 +94,13 @@ def main() -> None:
     text = " ".join(sys.argv[1:])
     if not text:
         raise SystemExit("usage: qr <text>")
-    segno.make(text).terminal(compact=True)
+    segno.make(text, micro=False).terminal(compact=True)
 ```
+
+(`micro=False` matters: left at the default, `segno.make()` picks a **Micro QR
+Code** for short text like a URL — a real format, but one most phone camera
+apps can't scan, since they only recognise standard QR Codes. Worth a beat if
+someone's phone won't read the code on screen.)
 
 ### 3. Wire up `pyproject.toml` by hand
 
@@ -193,8 +202,14 @@ a mystery.
 ## Notes for next time
 
 - Fully offline — no wi-fi dependency, nothing to fall back to.
-- `segno.make(text).terminal(compact=True)` — `compact=True` uses half-block
-  characters so the code fits in fewer terminal rows. Drop it if a projector
-  renders the half-blocks badly.
+- **`micro=False` is required, not optional.** `segno.make(text)` on its own
+  picks a Micro QR Code for short input (any URL qualifies) — most phone
+  camera apps can't scan those, only standard QR Codes. Without it the demo
+  *looks* like it worked (prints a valid-looking grid) but nobody's phone
+  reads it, which is a confusing failure to debug live. Caught 2026-09-05
+  after exactly that happened.
+- `segno.make(text, micro=False).terminal(compact=True)` — `compact=True`
+  uses half-block characters so the code fits in fewer terminal rows. Drop it
+  if a projector renders the half-blocks badly.
 - Fun 20-second aside if you want one: longer text → denser QR (`qr "$(date)"`
   vs `qr "hi"`), because more data needs a bigger grid. Not required.

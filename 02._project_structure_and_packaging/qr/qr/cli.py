@@ -21,5 +21,7 @@ def main() -> None:
     if not text:
         raise SystemExit("usage: qr <text>")
 
-    code = segno.make(text)
+    # micro=False: segno defaults to a Micro QR Code for short text, which
+    # most phone cameras can't scan (they only recognise standard QR Codes).
+    code = segno.make(text, micro=False)
     code.terminal(compact=True)

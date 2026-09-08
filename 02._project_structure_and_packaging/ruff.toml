@@ -1,0 +1,49 @@
+# Mirrors the mistral-vibe fork's `[tool.ruff]` — the lint rules only, minus the
+# `include`/`exclude` (which would exclude these demo files). Kept next to the
+# tooling fixtures so `uvx ruff check ruff_check_failures.py` reproduces exactly
+# what the fork's CI would report.
+
+line-length = 88
+target-version = "py312"
+preview = true
+
+[lint]
+select = [
+    "F",
+    "I",
+    "D2",
+    "UP",
+    "TID",
+    "ANN",
+    "PLR",
+    "B0",
+    "B905",
+    "RUF022",
+    "RUF010",
+    "RUF012",
+    "RUF019",
+    "RUF100",
+]
+ignore = ["D203", "D205", "D213", "ANN401", "PLR6301"]
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.isort]
+known-first-party = ["vibe"]
+force-sort-within-sections = true
+split-on-trailing-comma = false
+combine-as-imports = true
+force-wrap-aliases = false
+order-by-type = true
+required-imports = ["from __future__ import annotations"]
+
+[lint.pylint]
+max-public-methods = 26
+max-positional-args = 10
+max-statements = 50
+max-branches = 15
+max-locals = 15
+max-args = 10
+max-returns = 6
+max-nested-blocks = 5

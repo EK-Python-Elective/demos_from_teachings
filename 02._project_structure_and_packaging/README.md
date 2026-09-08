@@ -187,15 +187,51 @@ field. Every concept is the same, just bigger:
 | 1 dependency (`segno`), no transitive deps | ~60 dependencies, all `==`-pinned, hundreds of transitive | `uv.lock` scales without changing shape |
 | `qr = "qr.cli:main"` | `vibe = "vibe.cli.entrypoint:main"` (+ `vibe-acp`, `vibe-app-server`) | one project can expose several commands |
 | `[build-system]` → hatchling | hatchling **+ hatch-vcs** (version from git tags) | same backend, extra plugin |
-| no tool config yet | `[tool.ruff]`, `[tool.pyright]`, `[tool.pytest]` … | tool config also lives in `pyproject.toml` — session 3 |
+| no tool config yet | `[tool.ruff]`, `[tool.pyright]`, `[tool.pytest]` … | tool config also lives in `pyproject.toml` — part 3, below |
 
 Point at one dependency in the fork's list that students will actually meet
-later — `httpx` (session 7), `pydantic` (session 4) — and note it arrived the
+later — `httpx` (session 6), `pydantic` (session 3) — and note it arrived the
 exact same way: `uv add`, then it's in `uv.lock`.
 
 Then hand off to the **scavenger hunt** exercise: students now know what
 `[project.scripts]` *is*, so "what function does `vibe` call?" is a lookup, not
 a mystery.
+
+---
+
+## Part 3 — the tooling fixtures (ruff + pyright)
+
+Two ready-made "broken" files for the tooling part of the session, so you don't
+have to type violations live:
+
+- [`ruff_check_failures.py`](ruff_check_failures.py) — one deliberate violation
+  for **every rule** the fork's `[tool.ruff]` selects (F, I, D2, UP, TID, ANN,
+  PLR, B0, B905, and five `RUF*` rules), each block labelled with the rule and
+  what it catches. The `ruff.toml` next to it mirrors the fork's lint config, so:
+
+  ```console
+  $ uvx ruff check ruff_check_failures.py          # 17 hits across the 14 rules
+  $ uvx ruff check --fix ruff_check_failures.py     # watch ~10 of them auto-fix
+  ```
+
+  (17 not 14 because `F401` fires once per unused import and `ANN` once per
+  missing annotation — worth pointing out: one rule, many hits.)
+
+- [`pyright_type_errors.py`](pyright_type_errors.py) — eight deliberate type
+  errors (wrong literal, wrong argument, wrong return, possibly-`None`, bad
+  container element, typo'd attribute, missing argument, reassignment), each with
+  the pyright rule name and message shape in a comment:
+
+  ```console
+  $ uvx pyright pyright_type_errors.py             # 8 errors, standard mode
+  ```
+
+  It leads with `testnumber: int = "I am not an int"` — the simplest one, and the
+  one that *runs fine* at runtime, which is the whole point of a checker.
+
+Both files are static-analysis fixtures — they're not meant to execute. Drop
+either into the fork and `uv run ruff check` / `uv run pyright` it there too; the
+config already matches.
 
 ---
 

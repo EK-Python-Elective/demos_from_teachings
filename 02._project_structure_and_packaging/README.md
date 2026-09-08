@@ -211,11 +211,18 @@ have to type violations live:
 
   ```console
   $ uvx ruff check ruff_check_failures.py          # 17 hits across the 14 rules
-  $ uvx ruff check --fix ruff_check_failures.py     # watch ~10 of them auto-fix
+  $ uvx ruff check --fix ruff_check_failures.py     # most auto-fix, 6 don't
   ```
 
   (17 not 14 because `F401` fires once per unused import and `ANN` once per
-  missing annotation — worth pointing out: one rule, many hits.)
+  missing annotation — worth pointing out: one rule, many hits. The 6 that
+  survive `--fix` — `PLR2004`, `ANN`×2, `B006`, `RUF012`, `B905` — are the
+  "the tool can't guess your intent" cases.)
+
+  The `ruff.toml` here is a full mirror of the fork's `[tool.ruff]` (same
+  `select`/`ignore` and the flake8-tidy-imports / isort / pylint sub-configs);
+  its one deviation is adding this file to `include`, since the fork scopes
+  `include` to `vibe/**` + `tests/**`.
 
 - [`pyright_type_errors.py`](pyright_type_errors.py) — eight deliberate type
   errors (wrong literal, wrong argument, wrong return, possibly-`None`, bad

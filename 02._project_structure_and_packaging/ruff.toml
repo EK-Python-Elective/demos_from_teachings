@@ -1,11 +1,21 @@
-# Mirrors the mistral-vibe fork's `[tool.ruff]` — the lint rules only, minus the
-# `include`/`exclude` (which would exclude these demo files). Kept next to the
-# tooling fixtures so `uvx ruff check ruff_check_failures.py` reproduces exactly
-# what the fork's CI would report.
+# A faithful mirror of mistral-vibe-ek-python-elective's `[tool.ruff]`, rewritten
+# as a standalone `ruff.toml` (drop the `tool.ruff` prefix, keep the rest verbatim).
+#
+# The ONLY change from the fork: `ruff_check_failures.py` is added to `include`,
+# because the fork's `include` is scoped to `vibe/**` + `tests/**` and this
+# fixture lives at the repo root. Everything else — the select/ignore set, the
+# flake8-tidy-imports / isort / pylint sub-configs, line-length, preview — is the
+# fork's config, so `uvx ruff check ruff_check_failures.py` here reports exactly
+# what the fork's CI (`Exam checks`) would.
 
+include = ["vibe/**/*.py", "tests/**/*.py", "ruff_check_failures.py"]
+exclude = ["pyinstaller/"]
 line-length = 88
 target-version = "py312"
 preview = true
+
+[format]
+skip-magic-trailing-comma = true
 
 [lint]
 select = [
@@ -25,6 +35,9 @@ select = [
     "RUF100",
 ]
 ignore = ["D203", "D205", "D213", "ANN401", "PLR6301"]
+
+[lint.per-file-ignores]
+"tests/*" = ["ANN", "PLR"]
 
 [lint.flake8-tidy-imports]
 ban-relative-imports = "all"

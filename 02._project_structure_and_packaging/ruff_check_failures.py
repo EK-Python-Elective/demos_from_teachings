@@ -3,11 +3,12 @@
 Teaching fixture for session 2, part 3 (tooling). NOT meant to run — every block
 below trips a different ruff rule on purpose.
 
-The `ruff.toml` next to this file mirrors the fork's `[tool.ruff.lint]` exactly
-(select / ignore / the flake8-tidy-imports + isort + pylint settings), so:
+The `ruff.toml` next to this file is a full mirror of the fork's `[tool.ruff]`
+(the only change: this file is added to `include`), so:
 
-    uvx ruff check ruff_check_failures.py          # see every failure
-    uvx ruff check --fix ruff_check_failures.py    # auto-fix the fixable ones
+    uvx ruff check ruff_check_failures.py          # 17 hits across the 14 rules
+    uvx ruff check --fix ruff_check_failures.py    # most auto-fix; 6 don't:
+                                                   # PLR2004, ANN x2, B006, RUF012, B905
 
 Dropping this file straight into your fork works too — it already has the config.
 """

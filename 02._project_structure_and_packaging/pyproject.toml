@@ -1,0 +1,86 @@
+# Makes this folder a tiny uv project so the Part 3 fixtures run with the course's
+# house command — `uv run ruff check .` / `uv run pyright` — instead of a global
+# `uvx`. `ruff` and `pyright` are pinned to the same versions the mistral-vibe
+# fork's `uv.lock` resolves, so the fixtures report exactly what a student sees
+# running the tools inside their fork.
+#
+# The `[tool.ruff]` / `[tool.pyright]` blocks below mirror the fork's, verbatim
+# except for `include` (scoped to the fixture files here instead of `vibe/**`).
+
+[project]
+name = "session-2-tooling-fixtures"
+version = "0.1.0"
+description = "Deliberately-broken files for the ruff + pyright part of session 2"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "ruff==0.15.18",
+    "pyright==1.1.409",
+]
+
+[tool.uv]
+package = false
+
+# --- mirror of the fork's [tool.ruff] --------------------------------------------
+[tool.ruff]
+include = ["ruff_check_failures.py"]
+line-length = 88
+target-version = "py312"
+preview = true
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = [
+    "F",
+    "I",
+    "D2",
+    "UP",
+    "TID",
+    "ANN",
+    "PLR",
+    "B0",
+    "B905",
+    "RUF022",
+    "RUF010",
+    "RUF012",
+    "RUF019",
+    "RUF100",
+]
+ignore = ["D203", "D205", "D213", "ANN401", "PLR6301"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN", "PLR"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+known-first-party = ["vibe"]
+force-sort-within-sections = true
+split-on-trailing-comma = false
+combine-as-imports = true
+force-wrap-aliases = false
+order-by-type = true
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.pylint]
+max-public-methods = 26
+max-positional-args = 10
+max-statements = 50
+max-branches = 15
+max-locals = 15
+max-args = 10
+max-returns = 6
+max-nested-blocks = 5
+
+# --- mirror of the fork's [tool.pyright] ----------------------------------------
+[tool.pyright]
+pythonVersion = "3.12"
+reportMissingTypeStubs = false
+reportPrivateImportUsage = false
+include = ["pyright_type_errors.py"]
+venvPath = "."
+venv = ".venv"
